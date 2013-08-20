@@ -28,6 +28,11 @@ void zombified::setup(imageEngine *e) {
 }
 
 void zombified::update() {
+    switch(visualState) {
+        case snIDLE:
+            break;
+            
+    }
     if(isPlay) {
         if(isZombie) {
             zombieFace.zombify(&localImage, &zombifiedFBO);
