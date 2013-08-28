@@ -1,0 +1,11 @@
+v0.2
+
+UPDATES:
+- Added cycling of images from the image folder
+- Added states and state changes
+
+TODO:
+- Add Syphon output
+- Add ability to change folder
+- Add ability to adjust transition times
+- Get more zombie faces

@@ -18,6 +18,9 @@
 #define snHOLD          3
 #define snUNLOADING     4
 
+#define DEFAULTLOADTIMER  200
+#define DEFAULTIDLETIMER  2000
+#define DEFAULTHOLDTIMER  2000
 
 class visualElement {
 public:
@@ -43,8 +46,10 @@ protected:
     int imgPointer;
     bool isPlay;
     bool syphonServerStatus;
-    
-    
+    long long holdTimer;
+    long long loadingTimer;
+    long long idleTimer;
+    int alpha;
 };
 
 #endif /* defined(__SUPRNRDY__visualElement__) */

@@ -35,6 +35,7 @@ faceReplace::~faceReplace() {
 int faceReplace::zombify(ofImage *original, ofFbo *newFbo) {
     int n = 0;
     zombified = newFbo;
+    original->resize(400, 300);
     // Allocate space if we haven't already
     if(!gray.bAllocated) {
         gray.allocate(original->width, original->height);
@@ -65,6 +66,7 @@ int faceReplace::zombify(ofImage *original, ofFbo *newFbo) {
     
     // BEGIN DRAWING TO OUR FBO
     zombified->begin();
+    ofClear(0, 0);
     ofEnableAlphaBlending();
     //original->draw(0, 0);
     lutImg.draw(0,0);

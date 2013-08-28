@@ -44,3 +44,11 @@ void imageEngine::onFolderUpdated(ofDirectory &e) {
 string imageEngine::getImagePath() {
     return imageQueue.pop();
 }
+
+bool imageEngine::newImages() {
+    if(imageQueue.size() > 0) {
+        return true;
+    } else {
+        return false;
+    }
+}

@@ -35,6 +35,7 @@ public:
     
     void onFolderUpdated(ofDirectory &e);
     string getImagePath();
+    bool newImages();
     
     
 private:

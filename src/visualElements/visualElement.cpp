@@ -25,7 +25,21 @@ void visualElement::setup(imageEngine *e) {
 }
 
 void visualElement::update() {
-    
+    switch(visualState) {
+        case snIDLE:
+            break;
+        case snLOADIMAGES:
+            break;
+        case snLOADING:
+            break;
+        case snHOLD:
+            break;
+        case snUNLOADING:
+            break;
+    }
+    if(isPlay) {
+        // Do something here
+    }
 }
 
 void visualElement::draw() {
