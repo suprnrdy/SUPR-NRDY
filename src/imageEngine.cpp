@@ -10,12 +10,15 @@
 
 imageEngine::imageEngine() {
     ofAddListener(watchThisFolder.folderChanged, this, &imageEngine::onFolderUpdated);
-    watchThisFolder.setPath("/Users/brizo/Desktop/images");
+    
 }
 
 imageEngine::~imageEngine() {
-    }
+}
 
+bool imageEngine::setPath(string newPath) {
+    watchThisFolder.setPath(newPath);
+}
 
 void imageEngine::onFolderUpdated(ofDirectory &e) {
     watchThisFolder.lock();

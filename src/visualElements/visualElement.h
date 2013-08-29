@@ -18,9 +18,9 @@
 #define snHOLD          3
 #define snUNLOADING     4
 
-#define DEFAULTLOADTIMER  200
-#define DEFAULTIDLETIMER  2000
-#define DEFAULTHOLDTIMER  2000
+#define DEFAULTLOADTIMER  100
+#define DEFAULTIDLETIMER  100
+#define DEFAULTHOLDTIMER  50
 
 class visualElement {
 public:
@@ -49,6 +49,9 @@ protected:
     long long holdTimer;
     long long loadingTimer;
     long long idleTimer;
+    long holdTime;
+    long loadingTime;
+    long idleTime;
     int alpha;
 };
 

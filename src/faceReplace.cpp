@@ -35,7 +35,6 @@ faceReplace::~faceReplace() {
 int faceReplace::zombify(ofImage *original, ofFbo *newFbo) {
     int n = 0;
     zombified = newFbo;
-    original->resize(400, 300);
     // Allocate space if we haven't already
     if(!gray.bAllocated) {
         gray.allocate(original->width, original->height);
@@ -44,7 +43,7 @@ int faceReplace::zombify(ofImage *original, ofFbo *newFbo) {
     if(!lutImg.isAllocated()) {
         lutImg.allocate(original->width, original->height, OF_IMAGE_COLOR);
     }
-    
+//    cout << "1 ";
     // Get grayscale of image
 	if( original->type == OF_IMAGE_COLOR ){
 		ofxCvColorImage color;
@@ -57,7 +56,7 @@ int faceReplace::zombify(ofImage *original, ofFbo *newFbo) {
 		ofLog(OF_LOG_ERROR, "ofxCvHaarFinder::findHaarObjects doesn't support OF_IMAGE_RGBA ofImage");
 		return 0;
 	}
-    
+//    cout << "2 ";
     // Find our face(s)
 	finder.findHaarObjects(*original);
     
@@ -65,12 +64,14 @@ int faceReplace::zombify(ofImage *original, ofFbo *newFbo) {
     applyLUT(original->getPixelsRef());
     
     // BEGIN DRAWING TO OUR FBO
+//    cout << "3 ";
     zombified->begin();
     ofClear(0, 0);
     ofEnableAlphaBlending();
     //original->draw(0, 0);
     lutImg.draw(0,0);
     ofNoFill();
+//    cout << "4 ";
     for(int i = 0; i < finder.blobs.size(); i++) {
         //finder.blobs[i].draw();
         ofRectangle cur = finder.blobs[i].boundingRect;
@@ -84,9 +85,11 @@ int faceReplace::zombify(ofImage *original, ofFbo *newFbo) {
             //ofRect(mouth.x, mouth.y, mouth.width, mouth.height);
             mouthImg.draw(mouth.x - mouth.width*2/5, mouth.y - mouth.height/3, mouth.width*2, mouth.height*2);
         }
+//        cout << "5 ";
         
         // FIND LEFT EYE
         n = leftEyeFinder.findHaarObjects(gray, cur.x, cur.y + cur.height/5, cur.width/2, cur.height - cur.height*5/8);
+        k = leftEyeFinder.blobs.size();
         for(int j = 0; j < k; j++) {
             ofRectangle lEye = leftEyeFinder.blobs[j].boundingRect;
             //leftEyeFinder.blobs[j].draw();
@@ -95,8 +98,10 @@ int faceReplace::zombify(ofImage *original, ofFbo *newFbo) {
             //ofRect(cur.x, cur.y + cur.height/5, cur.width/2, cur.height - cur.height*3/4);
         }
         
+//        cout << "6 ";
         // FIND RIGHT EYE
         n = rightEyeFinder.findHaarObjects(gray, cur.x + cur.width/2, cur.y + cur.height/5, cur.width/2, cur.height - cur.height*5/8);
+        k = rightEyeFinder.blobs.size();
         for(int j = 0; j < k; j++) {
             ofRectangle rEye = rightEyeFinder.blobs[j].boundingRect;
             //rightEyeFinder[j].draw();

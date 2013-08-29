@@ -6,20 +6,26 @@ void testApp::setup(){
     float length = 255-xInit;
     gui = new ofxUICanvas(0,0,320,320);		//ofxUICanvas(float x, float y, float width, float height)
     gui->addWidgetDown(new ofxUILabel("SUPR NRDY", OFX_UI_FONT_LARGE));
-    gui->addTextInput("TEXT INPUT", "Input Text", length-xInit);
+    gui->addTextInput("DIR", "/Users/brizo/Desktop/images", length-xInit);
     gui->addLabelButton("Select Folder", false);
     gui->addWidgetDown(new ofxUIToggle(32, 32, false, "FULLSCREEN"));
     ofAddListener(gui->newGUIEvent, this, &testApp::guiEvent);
     gui->loadSettings("GUI/guiSettings.xml");
     
+    currentDirectory = "/Users/brizo/Desktop/images";
+    
     ourZomby.setup(&ourImages);
     ourZomby.play();
+    setDir = false;
 }
 
 
 //--------------------------------------------------------------
 void testApp::update(){
     ourZomby.update();
+    if(setDir) {
+        openDialog();
+    }
 }
 
 //--------------------------------------------------------------
@@ -37,26 +43,32 @@ void testApp::draw(){
 
     glEnd();
     
+    ofSetHexColor(0xFFFFFF);
+	ofDrawBitmapString("FRAMERATE: " + ofToString(ofGetFrameRate()), 400,50);
     ourZomby.draw();
-    /*
-    //glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glBegin(GL_QUADS);
-    glColor3f(0.5f, 0.0f, 1.0f); // make this vertex purple
-    glVertex3f(0.0f, 0.0f, 0.0f);
-    glColor3f(1.0f, 0.0f, 0.0f); // make this vertex red
-    glVertex3f(1.0f, 0.0f, 0.0f);
-    glColor3f(0.0f, 1.0f, 0.0f); // make this vertex green
-    glVertex3f(1.0f, 1.0f, 0.0f);
-    glColor3f(1.0f, 1.0f, 0.0f); // make this vertex yellow
-    glVertex3f(0.0f, 0.0f, 0.0f);
-    glEnd();
-     */
 }
 
 void testApp::exit()
 {
 	gui->saveSettings("GUI/guiSettings.xml");
     delete gui;
+}
+
+void testApp::openDialog() {
+    setDir = false;
+    ofFileDialogResult openFolderResult= ofSystemLoadDialog("Select image directory", true);
+    if (openFolderResult.bSuccess){
+        
+        ofLogVerbose("User selected a file");
+        
+        //We have a folder, check it and process it
+        currentDirectory = openFolderResult.getPath();
+        ofxUITextInput *dir = (ofxUITextInput *)gui->getWidget("DIR");
+        dir->setTextString(currentDirectory);
+        ourImages.setPath(currentDirectory);
+    }else {
+        ofLogVerbose("User hit cancel");
+    }
 }
 
 void testApp::guiEvent(ofxUIEventArgs &e)
@@ -69,6 +81,11 @@ void testApp::guiEvent(ofxUIEventArgs &e)
     {
         ofxUIToggle *toggle = (ofxUIToggle *) e.widget;
         ofSetFullscreen(toggle->getValue());
+    } else if(e.widget->getName() == "Select Folder") {
+        ofxUIButton *button = (ofxUIButton *) e.widget;
+        if(button->getValue() == 0) {
+            setDir = true;
+        }
     }
 }
 

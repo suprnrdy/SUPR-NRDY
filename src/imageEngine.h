@@ -33,6 +33,7 @@ public:
     void dragEvent(ofDragInfo dragInfo);
     void gotMessage(ofMessage msg);
     
+    bool setPath(string newPath);
     void onFolderUpdated(ofDirectory &e);
     string getImagePath();
     bool newImages();

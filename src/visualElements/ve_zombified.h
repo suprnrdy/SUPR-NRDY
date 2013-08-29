@@ -11,6 +11,7 @@
 
 #include "visualElement.h"
 #include "faceReplace.h"
+#include "ofxSyphon.h"
 
 class zombified : public visualElement {
 public:
@@ -24,9 +25,11 @@ public:
 private:
     ofImage localImage;
     ofFbo zombifiedFBO;
+    ofTexture zombifiedTexture;
     
     bool isZombie;
     faceReplace zombieFace;
+    ofxSyphonServer zombieSyphonServer;
     
 };
 

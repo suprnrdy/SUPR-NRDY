@@ -25,10 +25,12 @@ public:
 private:
     void exit();
     void guiEvent(ofxUIEventArgs &e);
-    
     ofxUICanvas *gui;
     imageEngine ourImages;
-    
+    string currentDirectory;
     zombified ourZomby;
+    
+    void openDialog();
+    bool setDir;
     
 };
