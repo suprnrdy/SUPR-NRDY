@@ -3,7 +3,8 @@
 #include "ofMain.h"
 #include "ofxUI.h"
 #include "imageEngine.h"
-#include "visualElements/ve_zombified.h"
+//#include "visualElements/ve_zombified.h"
+#include "visualElements/ve_particles.h"
 
 class testApp : public ofBaseApp{
     
@@ -28,7 +29,11 @@ private:
     ofxUICanvas *gui;
     imageEngine ourImages;
     string currentDirectory;
-    zombified ourZomby;
+//    zombified ourZomby;
+    
+    int particles;
+    ParticleManager particleSystem;
+    ofFbo imageTexture;
     
     void openDialog();
     bool setDir;

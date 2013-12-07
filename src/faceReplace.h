@@ -27,7 +27,7 @@ private:
     
     ofFbo *zombified;
     
-    ofImage mouthImg, lefteyeImg, righteyeImg, lutImg;
+    ofImage mouthImg, lefteyeImg, righteyeImg, lutImg, mustacheImg;
     ofxCvHaarFinder finder;
     ofxCvHaarFinder mouthFinder;
     ofxCvHaarFinder leftEyeFinder;

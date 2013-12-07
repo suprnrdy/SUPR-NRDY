@@ -55,7 +55,7 @@ void zombified::update() {
                     cout << "FBO Allocated" << endl;
                 }
                 
-                if(isPlay) {
+                if(isPlay) {  
                     if(isZombie) {
                         if(localImage.isAllocated()) {
                             zombieFace.zombify(&localImage, &zombifiedFBO);

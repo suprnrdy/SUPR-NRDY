@@ -10,22 +10,24 @@
 
 faceReplace::faceReplace() {
 //    original->loadImage("test2.jpg");
-    mouthImg.loadImage("zombiemouth.png");
-    righteyeImg.loadImage("zombie_eye_right.png");
-    lefteyeImg.loadImage("zombie_eye_left.png");
+    mouthImg.loadImage("images/zombiemouth.png");
+    righteyeImg.loadImage("images/zombie_eye_right.png");
+    lefteyeImg.loadImage("images/zombie_eye_left.png");
+    mustacheImg.loadImage("images/preto.png");
+    mustacheImg.resize(100, 100*(mustacheImg.height/mustacheImg.width));
     cout << "Zombie overlays loaded" << endl;
-    finder.setup("haarcascade_frontalface_alt_tree.xml");
-    mouthFinder.setup("haarcascade_mcs_mouth.xml");
+    finder.setup("haarcascades/haarcascade_frontalface_alt_tree.xml");
+    mouthFinder.setup("haarcascades/haarcascade_mcs_mouth.xml");
     mouthFinder.setNeighbors(5);
     mouthFinder.setScaleHaar(1.01);
-    leftEyeFinder.setup("LEye18x12.1.xml");
+    leftEyeFinder.setup("haarcascades/LEye18x12.1.xml");
     leftEyeFinder.setNeighbors(2);
     leftEyeFinder.setScaleHaar(1.2);
-    rightEyeFinder.setup("REye18x12.1.xml");
+    rightEyeFinder.setup("haarcascades/REye18x12.1.xml");
     rightEyeFinder.setNeighbors(2);
     rightEyeFinder.setScaleHaar(1.2);
     
-    loadLUT("Earlybird.cube");
+    loadLUT("LUT/Earlybird.cube");
 }
 
 faceReplace::~faceReplace() {
@@ -82,8 +84,10 @@ int faceReplace::zombify(ofImage *original, ofFbo *newFbo) {
         for(int j = 0; j < k; j++) {
             ofRectangle mouth = mouthFinder.blobs[j].boundingRect;
             //mouthFinder.blobs[j].draw();
-            //ofRect(mouth.x, mouth.y, mouth.width, mouth.height);
-            mouthImg.draw(mouth.x - mouth.width*2/5, mouth.y - mouth.height/3, mouth.width*2, mouth.height*2);
+            ofRect(mouth.x, mouth.y, mouth.width, mouth.height);
+            //mouthImg.draw(mouth.x - mouth.width*2/5, mouth.y - mouth.height/3, mouth.width*2, mouth.height*2);
+            
+            mustacheImg.draw(mouth.x - mouth.width * 0.25, mouth.y - mouth.height/2, mouth.width * 1.5, mouth.height/1.5);
         }
 //        cout << "5 ";
         
@@ -93,7 +97,7 @@ int faceReplace::zombify(ofImage *original, ofFbo *newFbo) {
         for(int j = 0; j < k; j++) {
             ofRectangle lEye = leftEyeFinder.blobs[j].boundingRect;
             //leftEyeFinder.blobs[j].draw();
-            lefteyeImg.draw(lEye.x, lEye.y + lEye.height/11, lEye.width, lEye.height*2);
+            //lefteyeImg.draw(lEye.x, lEye.y + lEye.height/11, lEye.width, lEye.height*2);
             //ofRect(lEye.x, lEye.y, lEye.width, lEye.height);
             //ofRect(cur.x, cur.y + cur.height/5, cur.width/2, cur.height - cur.height*3/4);
         }
@@ -105,7 +109,7 @@ int faceReplace::zombify(ofImage *original, ofFbo *newFbo) {
         for(int j = 0; j < k; j++) {
             ofRectangle rEye = rightEyeFinder.blobs[j].boundingRect;
             //rightEyeFinder[j].draw();
-            righteyeImg.draw(rEye.x, rEye.y + rEye.height/11, rEye.width, rEye.height*2);
+            //righteyeImg.draw(rEye.x, rEye.y + rEye.height/11, rEye.width, rEye.height*2);
             //ofRect(lEye.x, lEye.y, lEye.width, lEye.height);
             //ofRect(cur.x, cur.y + cur.height/5, cur.width/2, cur.height - cur.height*3/4);
         }

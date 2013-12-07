@@ -1,1 +1,4 @@
 ofxOpenCv
+ofxXmlSettings
+ofxSyphon
+ofxUI
