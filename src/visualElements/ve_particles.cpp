@@ -10,24 +10,97 @@
 #include <math.h>
 #include "misc_functions.h"
 
+//720p
+// When using 720, the location of center image shifts... why??? Fix this!!!
+//#define SCREEN_W 1280
+//#define SCREEN_H 720
+//1080p - Why is this really slow?  Uses much more cpu, how do we speed this up overall?
 #define SCREEN_W 1920
 #define SCREEN_H 1080
 
 ParticleManager::ParticleManager() {
-    MAX_PARTICLES = 7000;
+    MAX_PARTICLES = 8000;
     fboTrue = false;
-    fboDisplay.allocate(SCREEN_W, SCREEN_H);
+    fboDisplay.allocate(SCREEN_W, SCREEN_H);//
+    fboDisplay.allocate(SCREEN_W, SCREEN_H);//
     fboDisplay.begin();
     ofClear(255,255,255, 0);
     fboDisplay.end();
     loadNewImages = false;
     imageCount = 0;
+    prevImg = -99;
     cameraRotation = 0;
     implode = true;
     animationNum = 0;
     transX = SCREEN_W/2;
     transY = SCREEN_H/2;
     transZ = -500;
+    animateStatus = HOLDING;
+    lifeLength = 6;
+}
+
+void ParticleManager::play() {
+    animateStatus = ANIMATING;
+}
+
+void ParticleManager::pause() {
+    animateStatus = HOLDING;
+}
+
+
+// ------------------------------------------ load textures
+void ParticleManager::loadTexture(string path, int cellsInRow, int cellsInCol) {
+	ofDisableArbTex();
+	texture.loadImage(path);
+	ofEnableArbTex();
+	texW = texture.getWidth();
+	texH = texture.getHeight();
+	cellRows  = cellsInRow;
+	cellColls = cellsInCol;
+}
+
+void ParticleManager::loadTexture(ofFbo *texture, int cellsInRow, int cellsInCol) {
+	fbotexture = texture;
+    fboTrue = true;
+	texW = texture->getWidth();
+	texH = texture->getHeight();
+	cellRows  = cellsInRow;
+	cellColls = cellsInCol;
+}
+
+void ParticleManager::loadLogo(string logo) {
+    bwLogo.loadImage(logo);
+    bwLogo.setImageType(OF_IMAGE_GRAYSCALE);
+    int w = bwLogo.getWidth();
+    int h = bwLogo.getHeight();
+
+    if(w > h) {
+        if(w < SCREEN_W/3 * 2) {
+            bwLogo.resize(SCREEN_W/3 * 2, (SCREEN_W/3 * 2 * h)/w);
+        }
+    } else {
+        if(h < SCREEN_H/3 * 2) {
+            bwLogo.resize((SCREEN_H/3 * 2 * w)/h, SCREEN_H/3 * 2);
+        }
+    }
+    
+    w = bwLogo.getWidth();
+    h = bwLogo.getHeight();
+    
+    int division = 5;
+    logoVector.clear();
+    unsigned char* pixels = bwLogo.getPixels();
+    for(int y = 0; y < h; y+=division) {
+        for(int x = 0; x < w; x+=division) {
+            int index = y * w + x;
+            unsigned char cur = pixels[index];
+            if(cur < 50) {
+                ofVec3f point(x - w/2, y - h/2, -100);
+                logoVector.push_back(point);
+            }
+        }
+    }
+    
 }
 
 // ------------------------------------------ init
@@ -39,26 +112,38 @@ void ParticleManager::setup(imageEngine *e) {
     imageLoader = e;
     //bwLogo.loadImage("logos/lexus.jpg");
     initTime = t;
-    
     bwLogo.loadImage("logos/BMW_logo_black_white.png");
     bwLogo.setImageType(OF_IMAGE_GRAYSCALE);
     int w = bwLogo.getWidth();
     int h = bwLogo.getHeight();
+    
+    if(w > h) {
+        if(w < SCREEN_W/2) {
+            bwLogo.resize(SCREEN_W/3 * 2, (SCREEN_W/3 * 2 * h)/w);
+        }
+    } else {
+        if(h < SCREEN_H/2) {
+            bwLogo.resize((SCREEN_H/3 * 2 * w)/h, SCREEN_H/3 * 2);
+        }
+    }
+    
+    w = bwLogo.getWidth();
+    h = bwLogo.getHeight();
+    
     int sphereD = (w > h ? w : h);
-    ofVec3f sphereC(0, 0, -300);
+    ofVec3f sphereC(0, 0, -sphereD/2);
     float diameter = 10;
     int division = 6;
     unsigned char* pixels = bwLogo.getPixels();
-    //ofSetColor(0, 0, 255);
     for(int y = 0; y < h; y+=division) {
         for(int x = 0; x < w; x+=division) {
             int index = y * w + x;
             unsigned char cur = pixels[index];
             if(cur < 50) {
-                ofVec3f point(x - 300, y - 300, -300);
+                ofVec3f point(x - w/2, y - h/2, -100);
                 logoVector.push_back(point);
                 float d = point.distance(sphereC);
-                sphereVector.push_back(ofVec3f((x - 300)*1.3, (y - 300)*1.3, (500 * cos((PI-0.3)/(sphereD/2) * d))));
+                sphereVector.push_back(ofVec3f((x - w/2)*1.3, (y - h/2)*1.3, (500 * cos((PI-0.3)/(sphereD/2) * d))));
                 //                sphereVector.push_back(ofVec3f((x - 300)*1.3, (y - 300)*1.3, sqrt((sphereD/2)^2 - (x - 300)^2 - (y - 300)^2)));
             }
         }
@@ -89,7 +174,7 @@ void ParticleManager::setup(imageEngine *e) {
 		// The Damping
 		damping[i] = 0.2;
 		// The Life of the Particle
-		life[i][0] = 30;
+		life[i][0] = lifeLength;
 		life[i][1] = 0.05;
 	}
 	// Setup the VBO
@@ -195,26 +280,6 @@ void ParticleManager::setParticleSize(int i, float particleDim) {
 	dim[i] = particleDim;
 }
 
-// ------------------------------------------ load textures
-void ParticleManager::loadTexture(string path, int cellsInRow, int cellsInCol) {
-	ofDisableArbTex();
-	texture.loadImage(path);
-	ofEnableArbTex();
-	texW = texture.getWidth();
-	texH = texture.getHeight();
-	cellRows  = cellsInRow;
-	cellColls = cellsInCol;
-}
-
-void ParticleManager::loadTexture(ofFbo *texture, int cellsInRow, int cellsInCol) {
-	fbotexture = texture;
-    fboTrue = true;
-	texW = texture->getWidth();
-	texH = texture->getHeight();
-	cellRows  = cellsInRow;
-	cellColls = cellsInCol;
-}
-
 // ------------------------------------------ add to the current position
 void ParticleManager::addPosition(int i, float x, float y, float z) {
 	if(i < 0)				i = 0;
@@ -286,11 +351,6 @@ void ParticleManager::update() {
         initTime = t;
         floatingParticles();
     }
-    for(int i=0; i<MAX_PARTICLES; i++) {
-		// fade by the life rate
-		life[i][0] -= life[i][1];
-        setParticleColor(i, 1.0, 1.0, 1.0, 1.0);
-	}
 }
 
 // ------------------------------------------ Render everything
@@ -319,7 +379,8 @@ void ParticleManager::render() {
                     ofSetColor(0, 0, 255);
                     ofRect(m * x, n * y, x, y);
                     ofSetColor(255, 255, 255);
-                    ofDrawBitmapString("PLACE HOLDER", 25, 25)  ;
+                    ofDrawBitmapString("PLACE HOLDER", m * x + 25, n * y + 25)  ;
+                    
                 }
             }
         }
@@ -335,7 +396,7 @@ void ParticleManager::render() {
     
     fboDisplay.begin();
     ofClear(255, 255, 255, 0);
-    snBackgroundGradient(255, 155, SCREEN_W, SCREEN_H);
+    snBackgroundGradient(155, 0, SCREEN_W, SCREEN_H);
     ofPushMatrix();
     ofTranslate(transX, transY, transZ);
     ofRotateY(ofRadToDeg(cameraRotation));
@@ -386,14 +447,37 @@ void ParticleManager::render() {
     if(fboDisplay.isAllocated()) {
         ofNoFill();
         ofSetColor(255, 255, 255, 255);
-        fboDisplay.draw(350, 30, 600, 350);
+        fboDisplay.draw(400, 30, 600, 350);
         particleSyphonServer.publishTexture(&fboDisplay.getTextureReference());
     }
     
-    fbotexture->draw(350, 385, 600, 350);
+    fbotexture->draw(400, 400, 600, 350);
 }
 
 // ------------------------------------------ Manage all of our animations here
+
+void ParticleManager::resetLogo() {
+    animationNum = 0;
+    int logoPos = 0;
+    
+    for(int i=0; i<MAX_PARTICLES; i++) {
+        if(logoPos >= logoVector.size()){
+            logoPos = 0;
+        }
+        setParticleSize(i, 8);
+        setParticlePos(i, logoVector[logoPos].x, logoVector[logoPos].y, logoVector[logoPos].z);
+        
+        if (MAX_PARTICLES < logoVector.size()) {
+            if(logoVector.size()/MAX_PARTICLES > 1) {
+                logoPos += logoVector.size()/MAX_PARTICLES;
+            } else {
+                logoPos += 2;
+            }
+        } else {
+            logoPos++;
+        }
+    }
+}
 
 void ParticleManager::createLogo() {
     int logoPos = 0;
@@ -433,7 +517,9 @@ void ParticleManager::createLogo() {
         if(numParticleComplete >= MAX_PARTICLES) {
             animateStatus = ANIMATING;
             cout << "Holding" << endl;
-            animationNum = 2;
+            if(imageLoader->newImages()){
+                animationNum = 2;
+            }
         }
     }
 }
@@ -541,7 +627,7 @@ void ParticleManager::explode() {
                 animationNum++;
                 
                 for (int i = 0; i < imageCount; i++) {
-                    setParticleSize(i, 200);
+                    setParticleSize(i, 300);
                     int randPos = (int)ofRandom(0, 4);
                     int zPos = 1300;
                     int offScreen = 500;
@@ -576,43 +662,57 @@ void ParticleManager::floatingParticles() {
     if(animateStatus == ANIMATING) {
 //      cout << "FLoating Particles" << endl;
         numParticleComplete = 0;
-        int prevImg = -99;
         ofVec3f prevDir;
         int offset = -100;
         if(imageCount > 0) {
             int i = imageCount - 1;
             if(prevImg > 0) {
-                cout << "Prev image: " << prevImg << endl;
-                moveParticle(prevDir *= 12, prevImg);
+                //cout << "Prev image: " << prevImg << endl;
+//                moveParticle(prevDir, prevImg);
+                int i = prevImg;
+                vel[i][0] += acc[i][0] * ofRandom(1, 2);
+                vel[i][1] += acc[i][1] * ofRandom(1, 2);
+                vel[i][2] += acc[i][2] * ofRandom(1, 2);
+                addPosition(i, vel[i][0], vel[i][1], vel[i][2]);
+                vel[i][0] *= damping[i];
+                vel[i][1] *= damping[i];
+                vel[i][2] *= damping[i];
             }
             ofVec3f position(pos[i*4].x, pos[i*4].y, pos[i*4].z);
-            ofVec3f dir = ofVec3f(offset, offset, 1195) - position;
-            float d = position.distance(ofVec3f(offset, offset, 1195));
+            ofVec3f dir = ofVec3f(offset, offset, 1199) - position;
+            float d = position.distance(ofVec3f(offset, offset, 1199));
             dir.normalize();
             
             
-            (d < 50) ? dir *= 1 : dir *= ofRandom(8, 5);
+            (d < 50) ? dir *= 2 : dir *= ofRandom(8, 5);
             if(d > 2) {
                 moveParticle(dir, i);
-//                setParticlePos(i, -100, -100, 1090);
-//                cout << "Image #: " << i  << " Position: " << position << " Life: " << life[i][0] << endl;
+                //setParticlePos(i, -100, -100, 1090);
+                cout << "Image #: " << i  << " Position: " << position << " Life: " << life[i][0] << endl;
             } else {
+                //cout << "image: " << imageCount << " life: " << life[i][0] << endl;
                 life[i][0] -= life[i][1];
                 if (life[i][0] < 0.0) {
-                    life[i][0] = 30;
+                    life[i][0] = lifeLength;
                     imageCount--;
                     prevImg = i;
-                    prevDir = dir;
                 }
             }
         } else {
             animationNum = 0;
+            int prevImg = -99;
             return;
         }
         
         int tW = SCREEN_W * 2;
         int tH = SCREEN_H * 2;
-        for(int i= imageCount; i<MAX_PARTICLES; i++) {
+        int startPos;
+        if(prevImg > 0) {
+            startPos = prevImg + 1;
+        } else {
+            startPos = imageCount;
+        }
+        for(int i = startPos; i<MAX_PARTICLES; i++) {
             ofVec3f position(pos[i*4].x, pos[i*4].y, pos[i*4].z);
             // Velocity and accelaration
 			vel[i][0] += acc[i][0];

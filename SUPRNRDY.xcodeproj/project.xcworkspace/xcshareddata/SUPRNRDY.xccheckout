@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>IDESourceControlProjectFavoriteDictionaryKey</key>
+	<false/>
+	<key>IDESourceControlProjectIdentifier</key>
+	<string>4961A6DB-2E68-4EB3-8739-BD704173F2CE</string>
+	<key>IDESourceControlProjectName</key>
+	<string>SUPRNRDY</string>
+	<key>IDESourceControlProjectOriginsDictionary</key>
+	<dict>
+		<key>49785FA7-C444-43AA-A2C9-66756093AB94</key>
+		<string>https://bitbucket.org/suprnrdy/supr-nrdy.git</string>
+	</dict>
+	<key>IDESourceControlProjectPath</key>
+	<string>SUPRNRDY.xcodeproj/project.xcworkspace</string>
+	<key>IDESourceControlProjectRelativeInstallPathDictionary</key>
+	<dict>
+		<key>49785FA7-C444-43AA-A2C9-66756093AB94</key>
+		<string>../..</string>
+	</dict>
+	<key>IDESourceControlProjectURL</key>
+	<string>https://bitbucket.org/suprnrdy/supr-nrdy.git</string>
+	<key>IDESourceControlProjectVersion</key>
+	<integer>110</integer>
+	<key>IDESourceControlProjectWCCIdentifier</key>
+	<string>49785FA7-C444-43AA-A2C9-66756093AB94</string>
+	<key>IDESourceControlProjectWCConfigurations</key>
+	<array>
+		<dict>
+			<key>IDESourceControlRepositoryExtensionIdentifierKey</key>
+			<string>public.vcs.git</string>
+			<key>IDESourceControlWCCIdentifierKey</key>
+			<string>49785FA7-C444-43AA-A2C9-66756093AB94</string>
+			<key>IDESourceControlWCCName</key>
+			<string>SUPRNRDY</string>
+		</dict>
+	</array>
+</dict>
+</plist>

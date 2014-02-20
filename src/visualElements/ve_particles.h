@@ -63,6 +63,7 @@ private:
 	int			cellColls;
 	float		texW, texH;
     int         imageCount;
+    int         prevImg;
 	
 	// OpenGL
 	GLuint		particleVBO[3];
@@ -76,6 +77,7 @@ private:
 	float		acc[8000][3];
 	float		damping[8000];
 	float		life[8000][2];		//	[life] [life rate]
+    float       lifeLength;
     int MAX_PARTICLES;
     
 	// ------------------------------------------
@@ -127,6 +129,10 @@ public:
 	void addParticles(int amt, float _x, float _y, float _z);
 	void render();
     void updateParticles(int count);
+    void play();
+    void pause();
+    void loadLogo(string file);
+    void resetLogo();
     
     ofxSyphonServer particleSyphonServer;
 };

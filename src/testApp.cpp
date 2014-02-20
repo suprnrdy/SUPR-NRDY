@@ -12,35 +12,40 @@ void testApp::setup(){
     gui->addWidgetDown(new ofxUIToggle(32, 32, false, "FULLSCREEN"));
     ofxUISlider *mslider = (ofxUISlider*) gui->addWidgetDown(new ofxUIMinimalSlider(length-xInit, 500, 8000, 7000.0, "PARTICLES", OFX_UI_FONT_MEDIUM));
     mslider->setLabelPrecision(0);
+    gui->addWidgetDown(new ofxUIToggle(32, 32, true, "Play"));
+    gui->addLabelButton("Load Logo", false);
+    gui->addLabelButton("Reset to Logo", false);
     ofAddListener(gui->newGUIEvent, this, &testApp::guiEvent);
     gui->setWidgetColor(OFX_UI_WIDGET_COLOR_FILL, ofColor(0,160));
     gui->setWidgetColor(OFX_UI_WIDGET_COLOR_FILL_HIGHLIGHT, ofColor(100, 160));
     gui->setWidgetColor(OFX_UI_WIDGET_COLOR_BACK, ofColor(255,255));
     gui->loadSettings("GUI/guiSettings.xml");
+    
+    
     currentDirectory = "/Users/brizo/Desktop/images";
     ofSetVerticalSync(true);
     ofImage temp;
     int x, y;
     ofDisableArbTex();
     temp.loadImage("/Users/brizo/Desktop/images/0.jpg");
-    x = temp.width;
-    y = temp.height;
+    x = temp.width/2;
+    y = temp.height/2;
     imageTexture.allocate(4*x, 4*y);
     imageTexture.begin();
     ofClear(0, 0);
     ofSetColor(255, 255, 255);
-    temp.draw(0, 0);
+    temp.draw(0, 0, x, y);
     temp.loadImage("/Users/brizo/Desktop/images/1.jpg");
-    temp.draw(x, 0);
+    temp.draw(x, 0, x, y);
     temp.loadImage("/Users/brizo/Desktop/images/2.jpg");
-    temp.draw(2*x, 0);
+    temp.draw(2*x, 0, x, y);
     temp.loadImage("logos/lexus.jpg");
-    temp.draw(3*x, 0);
+    temp.draw(3*x, 0, x, y);
     imageTexture.end();
     ofEnableArbTex();
     //	particleSystem.loadTexture("/Users/brizo/Desktop/images/processing/IMG_4338.jpg", 2, 2);
     particleSystem.loadTexture(&imageTexture, 4, 4);
-    
+    particleSystem.pause();
     particleSystem.setup(&ourImages);
 //    ourZomby.setup(&ourImages);
 //    ourZomby.play();
@@ -122,6 +127,41 @@ void testApp::guiEvent(ofxUIEventArgs &e)
         cout << mslider->getScaledValue() << endl;
         particles = mslider->getScaledValue();
         particleSystem.updateParticles(particles);
+    } else if(e.widget->getName() == "Play")
+    {
+        ofxUIToggle *toggle = (ofxUIToggle *) e.widget;
+        if(toggle->getValue()) {
+            particleSystem.play();
+        } else {
+            particleSystem.pause();
+        }
+    }  else if(e.widget->getName() == "Load Logo") {
+        ofxUIButton *button = (ofxUIButton *) e.widget;
+        if(button->getValue() == 0) {
+            ofFileDialogResult openFileResult= ofSystemLoadDialog("Select a jpg or png");
+            
+            //Check if the user opened a file
+            if (openFileResult.bSuccess){
+                ofFile file (openFileResult.getPath());
+                string fileExtension = ofToUpper(file.getExtension());
+                //We only want images
+                if (fileExtension == "JPG" || fileExtension == "PNG") {
+                    ofLogVerbose("User selected a file");
+                    if (file.exists()){
+                        //We have a file, check it and process it
+                        particleSystem.loadLogo(file.path());
+                    
+                    }
+                }
+            }else {
+                ofLogVerbose("User hit cancel");
+            }
+        }
+    } else if(e.widget->getName() == "Reset to Logo") {
+        ofxUIButton *button = (ofxUIButton *) e.widget;
+        if(button->getValue() == 0) {
+            particleSystem.resetLogo();
+        }
     }
 }
 

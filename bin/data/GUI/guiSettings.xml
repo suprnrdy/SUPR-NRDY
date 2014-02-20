@@ -11,5 +11,10 @@
 <Widget>
     <Kind>25</Kind>
     <Name>PARTICLES</Name>
-    <Value>6876.518066406</Value>
+    <Value>6421.052734375</Value>
+</Widget>
+<Widget>
+    <Kind>2</Kind>
+    <Name>Play</Name>
+    <Value>1</Value>
 </Widget>
