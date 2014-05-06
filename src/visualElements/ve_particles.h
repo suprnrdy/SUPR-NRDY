@@ -13,6 +13,7 @@
 #include "ofMain.h"
 #include "visualElement.h"
 #include "ofxSyphon.h"
+#include "ofxTween.h"
 
 // Animation Defines
 #define ANIMATING   1
@@ -118,6 +119,19 @@ private:
     // Floating effect
     float radius,initTime,t;
     float cameraRotation;
+    int imageNumber;
+    
+    // pause time
+    float paused_time, start_time;
+    
+    // Camera
+    ofCamera		camera;
+    ofNode          subject;
+    ofNode          logoSubject;
+    ofVec3f         oldN, newN;
+    ofxTween        camTween;
+    ofxEasingCirc 	easingcirc;
+
     
 public:
     ParticleManager();

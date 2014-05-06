@@ -32,9 +32,6 @@ ParticleManager::ParticleManager() {
     cameraRotation = 0;
     implode = true;
     animationNum = 0;
-    transX = SCREEN_W/2;
-    transY = SCREEN_H/2;
-    transZ = -500;
     animateStatus = HOLDING;
     lifeLength = 6;
 }
@@ -131,19 +128,20 @@ void ParticleManager::setup(imageEngine *e) {
     h = bwLogo.getHeight();
     
     int sphereD = (w > h ? w : h);
-    ofVec3f sphereC(0, 0, -sphereD/2);
+    ofVec3f sphereC(0, 0, 0);
     float diameter = 10;
     int division = 6;
     unsigned char* pixels = bwLogo.getPixels();
+    ofSetColor(0, 0, 255);
     for(int y = 0; y < h; y+=division) {
         for(int x = 0; x < w; x+=division) {
             int index = y * w + x;
             unsigned char cur = pixels[index];
             if(cur < 50) {
-                ofVec3f point(x - w/2, y - h/2, -100);
+                ofVec3f point(x, y, 0);
                 logoVector.push_back(point);
                 float d = point.distance(sphereC);
-                sphereVector.push_back(ofVec3f((x - w/2)*1.3, (y - h/2)*1.3, (500 * cos((PI-0.3)/(sphereD/2) * d))));
+                sphereVector.push_back(ofVec3f((x-1000)*1.3, (y-1000)*1.3, (1000 * cos((PI-0.3)/(sphereD/2) * d))));
                 //                sphereVector.push_back(ofVec3f((x - 300)*1.3, (y - 300)*1.3, sqrt((sphereD/2)^2 - (x - 300)^2 - (y - 300)^2)));
             }
         }
@@ -153,17 +151,17 @@ void ParticleManager::setup(imageEngine *e) {
 	// Init All The Particles Values
 	for(int i=0; i<MAX_PARTICLES; i++) {
 		// Set the size of the particle
-		setParticleSize(i, ofRandom(5, 20));
+		setParticleSize(i, 6);
 		// The Color Data
 		setParticleColor(i, 1, 1, 1, 1);
 		// Position and Texture
-		float px = ofRandom(-(SCREEN_W + 700), (SCREEN_W + 700));
-		float py = ofRandom(-(SCREEN_W + 700), (SCREEN_W + 700));
-		float pz = ofRandom(100, (SCREEN_W + 700));
+		float px = ofRandom(-1900, 1900);
+		float py = ofRandom(-1900, 1900);
+		float pz = ofRandom(-1900, 1900);
         randomVector.push_back(ofVec3f(px, py, pz));
 		setParticlePos(i, px, py, pz);
 		// The Texture Coords
-		setParticleTexCoords(i, (int)ofRandom(0, 4), (int)ofRandom(0, 4));
+		setParticleTexCoords(i, (int)ofRandom(0, 2), (int)ofRandom(0, 2));
 		// Velocity and accelaration
 		acc[i][0] = ofRandom(-1.0, 1.0);
 		acc[i][1] = ofRandom(-1.0, 1.0);
@@ -174,7 +172,7 @@ void ParticleManager::setup(imageEngine *e) {
 		// The Damping
 		damping[i] = 0.2;
 		// The Life of the Particle
-		life[i][0] = lifeLength;
+		life[i][0] = 90;
 		life[i][1] = 0.05;
 	}
 	// Setup the VBO
@@ -190,6 +188,24 @@ void ParticleManager::setup(imageEngine *e) {
 	glBufferDataARB(GL_ARRAY_BUFFER_ARB, (MAX_PARTICLES*4)*2*sizeof(float), texcords, GL_STREAM_DRAW_ARB);
     
     animateStatus = ANIMATING;
+    animationNum = 0;
+    // Camera Settings
+    camera.setFov(60);
+    camera.setPosition(0, 0, 900);
+    subject.setGlobalPosition(300, 300, 0);
+    subject.setOrientation(ofVec3f(180, 0, 135));
+    //camera.clearParent();
+    camera.setParent(subject);
+    camera.lookAt(subject);
+    //oldN = newN;
+    newN = ofVec3f(300, 300, 0);
+    //cout << oldN << "::" << newN << endl;
+    unsigned delay = 0;
+    unsigned duration = 10;
+    camTween.setParameters(easingcirc, ofxTween::easeInOut, oldN.x, newN.x, duration, delay);
+    camTween.addValue(oldN.y, newN.y);
+    camTween.addValue(oldN.z, newN.z);
+    camTween.start(); //dont forget to call start to sync all the tweens
 }
 
 void ParticleManager::updateParticles(int count) {
@@ -334,23 +350,22 @@ void ParticleManager::addParticles(int amt, float _x, float _y, float _z) {
 void ParticleManager::update() {
     t = ofGetElapsedTimef();
 	t = t - initTime;
+    cameraRotation =  ofSignedNoise(t*0.2) * 0.75;
     if(animationNum == 0) {
-        cameraRotation =  ofSignedNoise(t*0.2) * 0.75;
         createLogo();
     } else if(animationNum == 1) {
-        if(cameraRotation != 0) {
-            cameraRotation =  ofSignedNoise(t*0.2) * 0.75;
-        }
         createSphere();
     } else if(animationNum == 2) {
-        cameraRotation = 0;
         explode();
     } else if(animationNum == 3) {
-        //moveCamera();
-        cameraRotation = 0;
-        initTime = t;
-        floatingParticles();
+        moveCamera();
+        //floatingParticles();
     }
+    for(int i=0; i<MAX_PARTICLES; i++) {
+		// fade by the life rate
+		life[i][0] -= life[i][1];
+        setParticleColor(i, 1.0, 1.0, 1.0, 1.0);
+	}
 }
 
 // ------------------------------------------ Render everything
@@ -392,14 +407,19 @@ void ParticleManager::render() {
         }
          */
         loadNewImages = false;
+        cout << "Loaded images: " << imageCount << endl;
     }
     
     fboDisplay.begin();
-    ofClear(255, 255, 255, 0);
-    snBackgroundGradient(155, 0, SCREEN_W, SCREEN_H);
+    ofClear(0, 0, 0, 0);
+    camera.begin();
     ofPushMatrix();
-    ofTranslate(transX, transY, transZ);
-    ofRotateY(ofRadToDeg(cameraRotation));
+    ofSetColor(255, 128, 255);
+    ofVec3f v1 = camera.getGlobalPosition();
+    ofVec3f v2 = subject.getGlobalPosition();
+    //ofLine(v1,v2);
+    ofSetColor(255, 255, 255);
+    //snBackgroundGradient(155, 0, SCREEN_W, SCREEN_H);
     glEnable(GL_TEXTURE_2D);
     glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 	glEnableClientState(GL_VERTEX_ARRAY);
@@ -443,6 +463,7 @@ void ParticleManager::render() {
 //    ofLine(-100, -100, 1090, pos[11].x, pos[11].y, pos[11].z);
     
     ofPopMatrix();
+    camera.end();
     fboDisplay.end();
     if(fboDisplay.isAllocated()) {
         ofNoFill();
@@ -464,7 +485,7 @@ void ParticleManager::resetLogo() {
         if(logoPos >= logoVector.size()){
             logoPos = 0;
         }
-        setParticleSize(i, 8);
+        setParticleSize(i, 6);
         setParticlePos(i, logoVector[logoPos].x, logoVector[logoPos].y, logoVector[logoPos].z);
         
         if (MAX_PARTICLES < logoVector.size()) {
@@ -477,6 +498,22 @@ void ParticleManager::resetLogo() {
             logoPos++;
         }
     }
+    camera.setPosition(0, 0, 900);
+    subject.setGlobalPosition(300, 300, 0);
+    subject.setOrientation(ofVec3f(180, 0, 135));
+    //camera.clearParent();
+    camera.setParent(subject);
+    camera.lookAt(subject);
+    //oldN = newN;
+    newN = ofVec3f(300, 300, 0);
+    //cout << oldN << "::" << newN << endl;
+    unsigned delay = 0;
+    unsigned duration = 10;
+    camTween.setParameters(easingcirc, ofxTween::easeInOut, oldN.x, newN.x, duration, delay);
+    camTween.addValue(oldN.y, newN.y);
+    camTween.addValue(oldN.z, newN.z);
+    camTween.start(); //dont forget to call start to sync all the tweens
+    
 }
 
 void ParticleManager::createLogo() {
@@ -484,6 +521,12 @@ void ParticleManager::createLogo() {
 //    cout << "create logo" << endl;
     if(animateStatus == ANIMATING) {
         numParticleComplete = 0;
+        subject.setGlobalPosition(camTween.update(), camTween.getTarget(1), camTween.getTarget(2));
+        ofVec3f v1 = camera.getGlobalPosition();
+        ofVec3f v2 = subject.getGlobalPosition();
+        if(v1.distance(v2) < 900) {
+            camera.dolly(10);
+        }
         for(int i=0; i<MAX_PARTICLES; i++) {
             ofVec3f position(pos[i*4].x, pos[i*4].y, pos[i*4].z);
             if(logoPos >= logoVector.size()){
@@ -494,11 +537,12 @@ void ParticleManager::createLogo() {
             float d = position.distance(logoVector[logoPos]);
             if(d < 150 & d > 1) {
                 float size = ofMap(d, 0, 150, 8, dim[i]);
-                setParticleSize(i, size);
-                setParticlePos(i, pos[i*4].x, pos[i*4].y, pos[i*4].z);
+                //setParticleSize(i, size);
+                //setParticlePos(i, pos[i*4].x, pos[i*4].y, pos[i*4].z);
             }
             
             (d < 50) ? dir *= 1 : dir *= ofRandom(20, 12);
+            if(d > 2000) dir *= 200;
             if(d < 2) {
                 numParticleComplete++;
             } else {
@@ -537,8 +581,8 @@ void ParticleManager::createSphere() {
             float d = position.distance(sphereVector[spherePos]);
             if(d < 150) {
                 float size = ofMap(d, 0, 150, 8, dim[i]);
-                setParticleSize(i, size);
-                setParticlePos(i, pos[i*4].x, pos[i*4].y, pos[i*4].z);
+                //setParticleSize(i, size);
+                //setParticlePos(i, pos[i*4].x, pos[i*4].y, pos[i*4].z);
             }
             dir.normalize();
             (d < 50) ? dir *= 1 : dir *= 5;
@@ -574,8 +618,8 @@ void ParticleManager::explode() {
             float d;
             ofVec3f dir;
             if(implode){
-                dir = ofVec3f(0, 0, -300) - position;
-                d = position.distance(ofVec3f(0, 0, -300));
+                dir = ofVec3f(300, 300, 0) - position;
+                d = position.distance(ofVec3f(300, 300, 0));
             } else {
                 if (position.x > SCREEN_W + 100 || position.x < - (SCREEN_W + 100)) {
                     position = randomVector[i];
@@ -591,8 +635,8 @@ void ParticleManager::explode() {
             if(d < 150) {
                 if(!implode) {
                     float size = ofMap(150 - d, 0, 150, dim[i], 20);
-                    setParticleSize(i, size);
-                    setParticlePos(i, pos[i*4].x, pos[i*4].y, pos[i*4].z);
+                    //setParticleSize(i, size);
+                    //setParticlePos(i, pos[i*4].x, pos[i*4].y, pos[i*4].z);
                 }
             }
             dir.normalize();
@@ -623,36 +667,17 @@ void ParticleManager::explode() {
             } else {
                 cout << "Holding explode" << endl;
                 animateStatus = ANIMATING;
-                implode = true;
                 animationNum++;
+                oldN = ofVec3f(subject.getX(), subject.getY(), subject.getZ());
                 
-                for (int i = 0; i < imageCount; i++) {
-                    setParticleSize(i, 300);
-                    int randPos = (int)ofRandom(0, 4);
-                    int zPos = 1300;
-                    int offScreen = 500;
-                    switch (randPos) {
-                        case 0:
-                            setParticlePos(i, -offScreen, ofRandom(0, SCREEN_H), zPos);
-                            break;
-                        case 1:
-                            setParticlePos(i, ofRandom(0, SCREEN_W), SCREEN_H + offScreen, zPos);
-                            break;
-                        case 2:
-                            setParticlePos(i, SCREEN_W + offScreen, ofRandom(0, SCREEN_H), zPos);
-                            break;
-                        case 3:
-                            setParticlePos(i, ofRandom(0, SCREEN_W), -offScreen, zPos);
-                            break;
-                        default:
-                            setParticlePos(i, SCREEN_W + offScreen, ofRandom(0, SCREEN_H), zPos);
-                            break;
-                    }
-                }
-                for (int i = imageCount; i < MAX_PARTICLES; i++) {
-                    setParticlePos(i, pos[i*4].x, pos[i*4].y, pos[i*4].z);
-                }
-
+                unsigned delay = 0;
+                unsigned duration = 3000;
+                imageCount--;
+                newN = ofVec3f(pos[imageCount].x + 3, pos[imageCount].y + 3, pos[imageCount].z);
+                camTween.setParameters(easingcirc, ofxTween::easeInOut, oldN.x, newN.x, duration, delay);
+                camTween.addValue(oldN.y, newN.y);
+                camTween.addValue(oldN.z, newN.z);
+                camTween.start(); //dont forget to call start to sync all the tweens
             }
         }
     }
@@ -714,6 +739,7 @@ void ParticleManager::floatingParticles() {
         }
         for(int i = startPos; i<MAX_PARTICLES; i++) {
             ofVec3f position(pos[i*4].x, pos[i*4].y, pos[i*4].z);
+            damping[i] = 0.01;
             // Velocity and accelaration
 			vel[i][0] += acc[i][0];
             vel[i][1] += acc[i][1];
@@ -733,61 +759,73 @@ void ParticleManager::floatingParticles() {
 }
 
 void ParticleManager::moveCamera() {
+    numParticleComplete = 0;
+    
+    for(int i=1; i<MAX_PARTICLES; i++) {
+        if(i != imageCount){
+            ofVec3f position(pos[i*4].x, pos[i*4].y, pos[i*4].z);
+            // Velocity and accelaration
+            vel[i][0] += acc[i][0];
+            vel[i][1] += acc[i][1];
+            vel[i][2] += acc[i][2];
+            addPosition(i, vel[i][0], vel[i][1], vel[i][2]);
+            if (position.z < -900) {
+                setParticlePos(i, ofRandom(-1500, 1500), ofRandom(-1500, 1500), 1150);
+            }
+            if (position.z > 1200) {
+                setParticlePos(i, ofRandom(-1500, 1500), ofRandom(-1500, 1500), -900);
+            }
+            vel[i][0] *= damping[i];
+            vel[i][1] *= damping[i];
+            vel[i][2] *= damping[i];
+        }
+    }
+    
     if(animateStatus == ANIMATING) {
-        numParticleComplete = 0;
-        for(int i=0; i<1; i++) {
-            pos[0].z = 1900;
-            ofVec3f position(-pos[i*4].x + ofGetWidth()/2 - 250, -pos[i*4].y + ofGetHeight()/2 - 250, -pos[i*4].z);
-            ofVec3f cameraPos(transX, transY, transZ);
-            //cout << position << ":" << cameraPos << endl;
-            float d;
-            ofVec3f dir;
-            dir = position - cameraPos;
-            d = position.distance(cameraPos);
-            if(d < 500) {
-                float size = ofMap(500 - d, 0, 500, dim[i], 500);
-                setParticleSize(i, size);
-                setParticlePos(i, pos[i*4].x, pos[i*4].y, pos[i*4].z);
-            }
-            dir.normalize();
-            (d < 50) ? dir *= 1 : dir *= ofRandom(15, 7);
-            if(d < 50) {
-                dir *= 1;
-            } else if( d < 5) {
-                return;
-            } else {
-                dir *= 10;
-            }
-            if(d < 2) {
-                numParticleComplete++;
-            } else {
-                acc[i][0] = dir.x;
-                acc[i][1] = dir.y;
-                acc[i][2] = dir.z;
-                vel[i][0] += acc[i][0];
-                vel[i][1] += acc[i][1];
-                vel[i][2] += acc[i][2];
-                vel[i][0] *= damping[i];
-                vel[i][1] *= damping[i];
-                vel[i][2] *= damping[i];
-                transX += dir.x;
-                transY += dir.y;
-                transZ += dir.z;
-            }
+        subject.setGlobalPosition(camTween.update(), camTween.getTarget(1), camTween.getTarget(2));
+        ofVec3f v1 = camera.getGlobalPosition();
+        ofVec3f v2 = subject.getGlobalPosition();
+        if(v1.distance(v2) > 12) {
+            camera.dolly(-5);
         }
-        if(numParticleComplete >= 1) {
-            cout << "Holding" << endl;
-            if(implode) {
-                implode = false;
+        start_time = ofGetElapsedTimeMillis();
+    }
+    if(camTween.isCompleted()) {
+        //cout << "Image Count: " << imageCount << endl;
+        //cout << "Holding camera" << endl;
+        animateStatus = HOLDING;
+        paused_time = ofGetElapsedTimeMillis();
+        if (paused_time - start_time > 2500) {
+            if(imageCount > 0) {
+                int i = imageCount-1;
+                //cout << "Prev image: " << prevImg << endl;
+                //                moveParticle(prevDir, prevImg);
+                oldN = newN;
+                newN = ofVec3f(pos[i*4].x + 3, pos[i*4].y + 3, pos[i*4].z);
+                unsigned delay = 0;
+                unsigned duration = 3000;
+                camTween.setParameters(easingcirc, ofxTween::easeInOut, oldN.x, newN.x, duration, delay);
+                camTween.addValue(oldN.y, newN.y);
+                camTween.addValue(oldN.z, newN.z);
+                camTween.start(); //dont forget to call start to sync all the tweens
+                imageCount--;
             } else {
-                cout << "Holding camera" << endl;
-                animateStatus = HOLDING;
-                animationNum++;
-                transX = ofGetWidth()/2;
-                transY = ofGetHeight()/2;
-                transZ = -500;
+                cout << "images done" << endl;
+                animationNum = 0;
+                oldN = newN;
+                newN = ofVec3f(300, 300, 0);
+                //cout << oldN << "::" << newN << endl;
+                unsigned delay = 0;
+                unsigned duration = 300;
+                camTween.setParameters(easingcirc, ofxTween::easeInOut, oldN.x, newN.x, duration, delay);
+                camTween.addValue(oldN.y, newN.y);
+                camTween.addValue(oldN.z, newN.z);
+                camTween.start(); //dont forget to call start to sync all the tweens
             }
+            animateStatus = ANIMATING;
         }
+        //cout << oldN << "::" << newN << endl;
+        //animationNum++;
     }
 }
 
