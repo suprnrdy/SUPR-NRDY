@@ -4,15 +4,17 @@
 void testApp::setup(){
     ofSetFrameRate(60);
     float xInit = OFX_UI_GLOBAL_WIDGET_SPACING;
-    float length = 255-xInit;
+    float length = 260-xInit;
     gui = new ofxUICanvas(0,0,320,320);		//ofxUICanvas(float x, float y, float width, float height)
     gui->addWidgetDown(new ofxUILabel("SUPR NRDY", OFX_UI_FONT_LARGE));
     gui->addTextInput("DIR", "/Users/brizo/Desktop/images", length-xInit);
     gui->addLabelButton("Select Folder", false);
-    gui->addWidgetDown(new ofxUIToggle(32, 32, false, "FULLSCREEN"));
-    ofxUISlider *mslider = (ofxUISlider*) gui->addWidgetDown(new ofxUIMinimalSlider(length-xInit, 500, 8000, 7000.0, "PARTICLES", OFX_UI_FONT_MEDIUM));
+    gui->addWidgetDown(new ofxUIToggle("FULLSCREEN", 32, 32, false));
+    ofxUISlider *mslider = (ofxUISlider*) gui->addWidgetDown(new ofxUIMinimalSlider("PARTICLES", 0, 8000, 7000.0, length-xInit, 50,  OFX_UI_FONT_MEDIUM));
+    //ofxUIMinimalSlider(<#string _name#>, <#float _min#>, <#float _max#>, <#float _value#>, <#float w#>, <#float h#>)
     mslider->setLabelPrecision(0);
-    gui->addWidgetDown(new ofxUIToggle(32, 32, true, "Play"));
+    gui->addWidgetDown(new ofxUIToggle("Play", true, 32, 32));
+//    ofxUIToggle(<#string _name#>, <#bool _value#>, <#float w#>, <#float h#>)
     gui->addLabelButton("Load Logo", false);
     gui->addLabelButton("Reset to Logo", false);
     ofAddListener(gui->newGUIEvent, this, &testApp::guiEvent);
@@ -80,7 +82,6 @@ void testApp::draw(){
     
     ofSetHexColor(0xFFFFFF);
 	ofDrawBitmapString("FRAMERATE: " + ofToString(ofGetFrameRate()), 400, 10);
-//    ourZomby.draw();
     particleSystem.render();
 }
 
