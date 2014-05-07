@@ -673,7 +673,7 @@ void ParticleManager::explode() {
                 unsigned delay = 0;
                 unsigned duration = 3000;
                 imageCount--;
-                newN = ofVec3f(pos[imageCount].x + 3, pos[imageCount].y + 3, pos[imageCount].z);
+                newN = ofVec3f(pos[imageCount*4].x + 3, pos[imageCount*4].y + 3, pos[imageCount*4].z);
                 camTween.setParameters(easingcirc, ofxTween::easeInOut, oldN.x, newN.x, duration, delay);
                 camTween.addValue(oldN.y, newN.y);
                 camTween.addValue(oldN.z, newN.z);
@@ -765,9 +765,9 @@ void ParticleManager::moveCamera() {
         if(i != imageCount){
             ofVec3f position(pos[i*4].x, pos[i*4].y, pos[i*4].z);
             // Velocity and accelaration
-            vel[i][0] += acc[i][0];
-            vel[i][1] += acc[i][1];
-            vel[i][2] += acc[i][2];
+            //vel[i][0] += acc[i][0];
+            //vel[i][1] += acc[i][1];
+            //vel[i][2] += acc[i][2];
             addPosition(i, vel[i][0], vel[i][1], vel[i][2]);
             if (position.z < -900) {
                 setParticlePos(i, ofRandom(-1500, 1500), ofRandom(-1500, 1500), 1150);
@@ -775,9 +775,9 @@ void ParticleManager::moveCamera() {
             if (position.z > 1200) {
                 setParticlePos(i, ofRandom(-1500, 1500), ofRandom(-1500, 1500), -900);
             }
-            vel[i][0] *= damping[i];
-            vel[i][1] *= damping[i];
-            vel[i][2] *= damping[i];
+            //vel[i][0] *= damping[i];
+            //vel[i][1] *= damping[i];
+            //vel[i][2] *= damping[i];
         }
     }
     
@@ -785,14 +785,14 @@ void ParticleManager::moveCamera() {
         subject.setGlobalPosition(camTween.update(), camTween.getTarget(1), camTween.getTarget(2));
         ofVec3f v1 = camera.getGlobalPosition();
         ofVec3f v2 = subject.getGlobalPosition();
-        if(v1.distance(v2) > 12) {
+        if(v1.distance(v2) > 100) {
+            camera.dolly(-10);
+        } else if(v1.distance(v2) > 12) {
             camera.dolly(-5);
         }
         start_time = ofGetElapsedTimeMillis();
     }
     if(camTween.isCompleted()) {
-        //cout << "Image Count: " << imageCount << endl;
-        //cout << "Holding camera" << endl;
         animateStatus = HOLDING;
         paused_time = ofGetElapsedTimeMillis();
         if (paused_time - start_time > 2500) {
@@ -811,6 +811,7 @@ void ParticleManager::moveCamera() {
                 imageCount--;
             } else {
                 cout << "images done" << endl;
+                implode = true;
                 animationNum = 0;
                 oldN = newN;
                 newN = ofVec3f(300, 300, 0);
