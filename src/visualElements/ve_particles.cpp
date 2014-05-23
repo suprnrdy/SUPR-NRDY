@@ -34,6 +34,8 @@ ParticleManager::ParticleManager() {
     animationNum = 0;
     animateStatus = HOLDING;
     lifeLength = 6;
+    rect_x = sqrt(MAX_PARTICLES/4);
+    pSize = 6;
 }
 
 void ParticleManager::play() {
@@ -84,7 +86,7 @@ void ParticleManager::loadLogo(string logo) {
     w = bwLogo.getWidth();
     h = bwLogo.getHeight();
     
-    int division = 5;
+    int division = 6;
     logoVector.clear();
     unsigned char* pixels = bwLogo.getPixels();
     for(int y = 0; y < h; y+=division) {
@@ -92,7 +94,7 @@ void ParticleManager::loadLogo(string logo) {
             int index = y * w + x;
             unsigned char cur = pixels[index];
             if(cur < 50) {
-                ofVec3f point(x - w/2, y - h/2, -100);
+                ofVec3f point(x, y, 0);
                 logoVector.push_back(point);
             }
         }
@@ -151,7 +153,7 @@ void ParticleManager::setup(imageEngine *e) {
 	// Init All The Particles Values
 	for(int i=0; i<MAX_PARTICLES; i++) {
 		// Set the size of the particle
-		setParticleSize(i, 6);
+		setParticleSize(i, pSize);
 		// The Color Data
 		setParticleColor(i, 1, 1, 1, 1);
 		// Position and Texture
@@ -360,6 +362,8 @@ void ParticleManager::update() {
     } else if(animationNum == 3) {
         moveCamera();
         //floatingParticles();
+    } else if(animationNum == 4) {
+        flatWall();
     }
     for(int i=0; i<MAX_PARTICLES; i++) {
 		// fade by the life rate
@@ -485,7 +489,7 @@ void ParticleManager::resetLogo() {
         if(logoPos >= logoVector.size()){
             logoPos = 0;
         }
-        setParticleSize(i, 6);
+        setParticleSize(i, pSize);
         setParticlePos(i, logoVector[logoPos].x, logoVector[logoPos].y, logoVector[logoPos].z);
         
         if (MAX_PARTICLES < logoVector.size()) {
@@ -768,13 +772,15 @@ void ParticleManager::moveCamera() {
             //vel[i][0] += acc[i][0];
             //vel[i][1] += acc[i][1];
             //vel[i][2] += acc[i][2];
-            addPosition(i, vel[i][0], vel[i][1], vel[i][2]);
+            addPosition(i, vel[i][0]*(1 + sin(t)), vel[i][1]*(1 + sin(t)), vel[i][2]*(1 + sin(t)));
+            /*
             if (position.z < -900) {
                 setParticlePos(i, ofRandom(-1500, 1500), ofRandom(-1500, 1500), 1150);
             }
             if (position.z > 1200) {
                 setParticlePos(i, ofRandom(-1500, 1500), ofRandom(-1500, 1500), -900);
             }
+             */
             //vel[i][0] *= damping[i];
             //vel[i][1] *= damping[i];
             //vel[i][2] *= damping[i];
@@ -814,7 +820,8 @@ void ParticleManager::moveCamera() {
                 implode = true;
                 animationNum = 0;
                 oldN = newN;
-                newN = ofVec3f(300, 300, 0);
+                //newN = ofVec3f(2*rect_x, rect_x/2, -100);
+                newN = ofVec3f(300, 300, -100);
                 //cout << oldN << "::" << newN << endl;
                 unsigned delay = 0;
                 unsigned duration = 300;
@@ -829,4 +836,52 @@ void ParticleManager::moveCamera() {
         //animationNum++;
     }
 }
+
+void ParticleManager::flatWall() {
+    //    cout << "create logo" << endl;
+    if(animateStatus == ANIMATING) {
+        numParticleComplete = 0;
+        subject.setGlobalPosition(camTween.update(), camTween.getTarget(1), camTween.getTarget(2));
+        ofVec3f v1 = camera.getGlobalPosition();
+        ofVec3f v2 = subject.getGlobalPosition();
+        if(v1.distance(v2) < 200) {
+            camera.dolly(10);
+        }
+        for(int i=0; i<MAX_PARTICLES; i++) {
+            ofVec3f position(pos[i*4].x, pos[i*4].y, pos[i*4].z);
+            /* target here */
+            float x_pos = (-2 * rect_x) + (i % (4*rect_x)) * pSize;
+            int h = i / (4 * rect_x);
+            if(h >= rect_x) {
+                h = 0;
+            }
+            float y_pos = -rect_x/2 + (h) * pSize;
+            ofVec3f target(x_pos, y_pos, -100);
+            
+            ofVec3f dir = target - position;
+            dir.normalize();
+            float d = position.distance(target);
+
+            (d < 50) ? dir *= 1 : dir *= ofRandom(20, 12);
+            if(d > 2000) dir *= 200;
+            if(d < 2) {
+                numParticleComplete++;
+            } else {
+                moveParticle(dir, i);
+            }
+        }
+        if(numParticleComplete >= MAX_PARTICLES) {
+            animateStatus = ANIMATING;
+            cout << "Holding" << endl;
+            if(imageLoader->newImages()){
+                animationNum = 0;
+                animateStatus = HOLDING;
+            }
+        }
+        
+        
+    }
+}
+
+
 

@@ -80,6 +80,8 @@ private:
 	float		life[8000][2];		//	[life] [life rate]
     float       lifeLength;
     int MAX_PARTICLES;
+    int rect_x;
+    int pSize;
     
 	// ------------------------------------------
 	void setParticleColor(int i, float r, float g, float b, float a=0.0);
@@ -112,6 +114,7 @@ private:
     void explode();
     void moveCamera();
     void floatingParticles();
+    void flatWall();
     bool implode;
     bool loadNewImages;
     imageEngine *imageLoader;
